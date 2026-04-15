@@ -1,1 +1,16 @@
+#각 ai agent repo
+
+hermes-agent
+https://github.com/NousResearch
+gh repo clone NousResearch/hermes-agent
+gh repo clone NousResearch/hermes-agent-self-evolution
+
+pi-mono
+gh repo clone badlogic/pi-mono
+gh repo clone badlogic/pi-skills
+
+openclaw
+gh repo clone openclaw/openclaw
+gh repo clone openclaw/skills
+gh repo clone openclaw/clawhub
 
