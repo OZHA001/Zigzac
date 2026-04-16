@@ -1,0 +1,552 @@
+{
+  "_meta": {
+    "source": "cli.js v2.1.88 deep extraction",
+    "date": "2026-04-15",
+    "note": "미공개/숨겨진 기능, 환경변수, 내부 엔드포인트, 우회 로직 전수 추출",
+    "total_items": 420
+  },
+
+  "feature_flags": {
+    "category": "Feature Flags (tengu_*)",
+    "description": "cli.js 전체에서 추출한 tengu_ 텔레메트리/피처게이트 플래그. 이벤트 이름과 피처 게이트 이름이 동일 네임스페이스를 공유한다.",
+    "amber_ab_groups": {
+      "description": "A/B 테스트 버킷. 모델 코드네임이 아닌 실험적 기능 활성화 그룹.",
+      "flags": [
+        { "key": "tengu_amber_json_tools", "description": "structured JSON tool use 실험적 활성화 (structured tool input/output)" },
+        { "key": "tengu_amber_flint", "description": "A/B 버킷 flint" },
+        { "key": "tengu_amber_stoat", "description": "A/B 버킷 stoat" },
+        { "key": "tengu_amber_quartz_disabled", "description": "quartz 비활성화 버킷" },
+        { "key": "tengu_amber_wren", "description": "A/B 버킷 wren" },
+        { "key": "tengu_amber_prism", "description": "A/B 버킷 prism" }
+      ]
+    },
+    "codename_gates": {
+      "description": "내부 기능 코드네임으로 게이팅된 플래그들",
+      "flags": [
+        { "key": "tengu_basalt_3kr", "description": "MCP instruction delta 활성화 게이트 (getInstructionsDelta 경로 제어)" },
+        { "key": "tengu_birch_trellis", "description": "Bash 명령 인젝션 AST 보안 검사 활성화 (기본값 true)" },
+        { "key": "tengu_chair_sermon", "description": "메시지 정규화 파이프라인 변환 활성화 (i0K() 함수 경로)" },
+        { "key": "tengu_cobalt_frost", "description": "Voice STT Nova 3 (Deepgram nova3) 엔진 + 대화 엔진 활성화" },
+        { "key": "tengu_cobalt_lantern", "description": "GitHub 앱 없이 token-sync로 저장소 접근 허용" },
+        { "key": "tengu_chomp_inflection", "description": "프롬프트 제안(prompt suggestion) 기능 활성화" },
+        { "key": "tengu_cork_m4q", "description": "시스템 프롬프트 처리 대체 경로 활성화 (RG 함수)" },
+        { "key": "tengu_toolref_defer_j8m", "description": "도구 참조 지연(deferred tools) 처리 경로 활성화 (uYY 함수)" },
+        { "key": "tengu_turtle_carbon", "description": "ultrathink 키워드 트리거 활성화 게이트 (qr() 함수)" },
+        { "key": "tengu_marble_sandcastle", "description": "firstParty가 아닐 때 Fast mode 차단 조건" },
+        { "key": "tengu_lodestone_enabled", "description": "딥링크 레지스트리(.deep-link-register) 활성화" },
+        { "key": "tengu_willow_mode", "description": "Remote 모드에서 빈 입력 처리 및 타이머 동작 제어 (ms 값 보관)" },
+        { "key": "tengu_penguins_off", "description": "Fast mode 강제 비활성화 + 비활성화 사유 문자열 반환" },
+        { "key": "tengu_ccr_bundle_seed_enabled", "description": "CCR 번들 시드 활성화" }
+      ]
+    },
+    "kairos_flags": {
+      "description": "KAIROS 시스템 관련 플래그 (내부 이름: kairosActive, 원격/자율 에이전트 실행 모드)",
+      "flags": [
+        { "key": "tengu_kairos_brief", "description": "KAIROS brief 모드 UI 활성화 (간결 출력 뷰)" },
+        { "key": "tengu_kairos_brief_config", "description": "KAIROS brief 설정값 오버라이드 (JSON)" },
+        { "key": "tengu_kairos_cron", "description": "KAIROS 크론 스케줄러 활성화 (isKairosCronEnabled())" },
+        { "key": "tengu_kairos_cron_config", "description": "크론 지터(jitter) 설정 — 기본 jitter 60000ms, maxAge 1800000ms" },
+        { "key": "tengu_kairos_cron_durable", "description": "내구성 크론(durable cron) 활성화 (isDurableCronEnabled())" }
+      ]
+    },
+    "ultraplan_flags": {
+      "description": "UltraPlan/UltraThink 관련 플래그",
+      "flags": [
+        { "key": "tengu_ultrathink", "description": "ultrathink 키워드 감지 시 effort=high 강제 적용 텔레메트리" },
+        { "key": "tengu_ultraplan_approved", "description": "UltraPlan 플랜 승인 이벤트" },
+        { "key": "tengu_ultraplan_awaiting_input", "description": "UltraPlan 사용자 입력 대기 이벤트" },
+        { "key": "tengu_ultraplan_launched", "description": "UltraPlan 원격 세션 시작 이벤트" },
+        { "key": "tengu_ultraplan_model", "description": "UltraPlan에서 사용된 모델 기록" },
+        { "key": "tengu_ultraplan_failed", "description": "UltraPlan 실패 이벤트" }
+      ]
+    },
+    "voice_flags": {
+      "flags": [
+        { "key": "tengu_voice_recording_started", "description": "음성 녹음 시작" },
+        { "key": "tengu_voice_recording_completed", "description": "음성 녹음 완료 (transcription 포함)" },
+        { "key": "tengu_voice_toggled", "description": "음성 입력 토글" },
+        { "key": "tengu_voice_stream_early_retry", "description": "WebSocket 조기 재연결" },
+        { "key": "tengu_voice_silent_drop_replay", "description": "무음 구간 드롭 후 재재생" }
+      ]
+    },
+    "total_unique_flags": 428
+  },
+
+  "hidden_env_vars": {
+    "category": "Hidden Environment Variables",
+    "description": "process.env에서 참조하는 비공개/미문서 환경변수 중 에이전트 권한·동작을 변경하는 것들",
+    "privilege_escalation": [
+      {
+        "key": "CLAUDE_CODE_DISABLE_COMMAND_INJECTION_CHECK",
+        "description": "Bash 명령 인젝션 AST 보안 검사(birch_trellis) 완전 비활성화. truthy 시 모든 명령 실행 허용.",
+        "risk": "CRITICAL — 보안 검사 우회"
+      },
+      {
+        "key": "CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS",
+        "description": "실험적 beta 헤더 전체 비활성화",
+        "risk": "medium"
+      },
+      {
+        "key": "CLAUDE_CODE_PLAN_MODE_REQUIRED",
+        "description": "모든 세션에 plan 모드 강제 적용 (permission mode=plan)",
+        "risk": "medium — 실행 억제"
+      },
+      {
+        "key": "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB",
+        "description": "자식 프로세스에 전달되는 환경변수 스크럽(민감정보 제거)",
+        "risk": "medium"
+      },
+      {
+        "key": "BUGHUNTER_DEV_BUNDLE_B64",
+        "description": "Base64 인코딩된 개발자 번들을 BugHunter(코드리뷰 원격 에이전트)에 주입. 프로덕션 번들 대신 커스텀 번들 실행 가능.",
+        "risk": "CRITICAL — 원격 에이전트 코드 교체"
+      },
+      {
+        "key": "CCR_FORCE_BUNDLE",
+        "description": "CCR(Cloud Code Review) 번들 강제 업로드 — skipBundle 무시",
+        "risk": "high"
+      },
+      {
+        "key": "CCR_UPSTREAM_PROXY_ENABLED",
+        "description": "CCR 업스트림 프록시 경로 강제 활성화 (CLAUDE_CODE_REMOTE + REMOTE_SESSION_ID 필요)",
+        "risk": "high"
+      },
+      {
+        "key": "CLAUDE_CODE_SKIP_BEDROCK_AUTH",
+        "description": "Bedrock 인증 스킵",
+        "risk": "high"
+      },
+      {
+        "key": "CLAUDE_CODE_SKIP_VERTEX_AUTH",
+        "description": "Vertex AI 인증 스킵",
+        "risk": "high"
+      },
+      {
+        "key": "CLAUDE_CODE_SKIP_FOUNDRY_AUTH",
+        "description": "Azure AI Foundry 인증 스킵",
+        "risk": "high"
+      }
+    ],
+    "behavior_override": [
+      { "key": "ANTHROPIC_BETAS", "description": "쉼표 구분 beta 헤더 강제 주입 (anthropic-beta 헤더 직접 오버라이드)" },
+      { "key": "ANTHROPIC_CUSTOM_HEADERS", "description": "모든 API 요청에 커스텀 HTTP 헤더 주입" },
+      { "key": "ANTHROPIC_CUSTOM_MODEL_OPTION", "description": "모델 선택기에 커스텀 모델 옵션 추가 (id/name/description 3개 변수)" },
+      { "key": "ANTHROPIC_DEFAULT_HAIKU_MODEL", "description": "기본 haiku 모델 ID 오버라이드" },
+      { "key": "ANTHROPIC_DEFAULT_SONNET_MODEL", "description": "기본 sonnet 모델 ID 오버라이드" },
+      { "key": "ANTHROPIC_DEFAULT_OPUS_MODEL", "description": "기본 opus 모델 ID 오버라이드" },
+      { "key": "ANTHROPIC_SMALL_FAST_MODEL", "description": "소형/고속 모델 ID 오버라이드" },
+      { "key": "ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION", "description": "소형 모델용 AWS 리전 오버라이드" },
+      { "key": "CLAUDE_CODE_SUBAGENT_MODEL", "description": "모든 서브에이전트에 강제 적용할 모델 ID" },
+      { "key": "CLAUDE_CODE_EFFORT_LEVEL", "description": "세션 전체 effort level 오버라이드 (low/medium/high/unset/auto)" },
+      { "key": "CLAUDE_CODE_MAX_OUTPUT_TOKENS", "description": "최대 출력 토큰 수 오버라이드" },
+      { "key": "CLAUDE_CODE_MAX_RETRIES", "description": "API 재시도 횟수 오버라이드" },
+      { "key": "CLAUDE_CODE_MAX_TOOL_USE_CONCURRENCY", "description": "병렬 도구 실행 최대 동시성 수" },
+      { "key": "MAX_THINKING_TOKENS", "description": "thinking 블록 최대 토큰 수 오버라이드" },
+      { "key": "MAX_MCP_OUTPUT_TOKENS", "description": "MCP 도구 결과 최대 토큰 수" },
+      { "key": "SLASH_COMMAND_TOOL_CHAR_BUDGET", "description": "슬래시 커맨드 도구 응답 문자 예산" },
+      { "key": "TASK_MAX_OUTPUT_LENGTH", "description": "백그라운드 태스크 최대 출력 길이" },
+      { "key": "BASH_MAX_OUTPUT_LENGTH", "description": "Bash 도구 최대 출력 길이" },
+      { "key": "API_TIMEOUT_MS", "description": "API 요청 타임아웃 ms 오버라이드" },
+      { "key": "CLAUDE_STREAM_IDLE_TIMEOUT_MS", "description": "스트리밍 유휴 타임아웃 ms" },
+      { "key": "CLAUDE_CODE_STALL_TIMEOUT_MS_FOR_TESTING", "description": "스트리밍 정지 감지 타임아웃 (테스트용)" },
+      { "key": "CLAUDE_CODE_SLOW_OPERATION_THRESHOLD_MS", "description": "느린 작업 로깅 임계값 ms (기본값 미공개)" },
+      { "key": "CLAUDE_CODE_BLOCKING_LIMIT_OVERRIDE", "description": "블로킹 응답 제한 오버라이드" },
+      { "key": "CLAUDE_CODE_AUTOCOMPACT_PCT_OVERRIDE", "description": "자동 압축 트리거 컨텍스트 사용률 임계값 % 오버라이드" },
+      { "key": "CLAUDE_CODE_IDLE_THRESHOLD_MINUTES", "description": "유휴 감지 임계값(분)" },
+      { "key": "CLAUDE_CODE_IDLE_TOKEN_THRESHOLD", "description": "유휴 상태 토큰 임계값" },
+      { "key": "CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS", "description": "FileRead 도구 최대 출력 토큰" },
+      { "key": "CLAUDE_CODE_EXTRA_BODY", "description": "API 요청 body에 추가 JSON 필드 주입" },
+      { "key": "CLAUDE_CODE_EXTRA_METADATA", "description": "텔레메트리 메타데이터에 추가 필드 주입" },
+      { "key": "CLAUDE_CODE_ATTRIBUTION_HEADER", "description": "x-attribution 헤더 커스텀 값" },
+      { "key": "CLAUDE_CODE_GLOB_HIDDEN", "description": "glob 검색 시 숨김 파일 포함" },
+      { "key": "CLAUDE_CODE_GLOB_NO_IGNORE", "description": ".gitignore 무시하고 glob 실행" },
+      { "key": "CLAUDE_CODE_GLOB_TIMEOUT_SECONDS", "description": "glob 타임아웃 초" },
+      { "key": "CLAUDE_COWORK_MEMORY_PATH_OVERRIDE", "description": "협업 메모리 파일 경로 오버라이드" },
+      { "key": "CLAUDE_COWORK_MEMORY_EXTRA_GUIDELINES", "description": "협업 메모리에 추가 가이드라인 주입" },
+      { "key": "TEAM_MEMORY_SYNC_URL", "description": "팀 메모리 동기화 서버 URL 오버라이드" },
+      { "key": "VOICE_STREAM_BASE_URL", "description": "음성 스트림 WebSocket 서버 URL 오버라이드 (wss://로 자동 변환)" },
+      { "key": "SESSION_INGRESS_URL", "description": "세션 인그레스 엔드포인트 URL" },
+      { "key": "CLAUDE_SESSION_INGRESS_TOKEN_FILE", "description": "세션 인그레스 토큰 파일 경로 (FD 기반 보안 전달)" },
+      { "key": "CLAUDE_CODE_WEBSOCKET_AUTH_FILE_DESCRIPTOR", "description": "WebSocket 인증 FD (파일 디스크립터 기반 토큰 전달)" },
+      { "key": "CLAUDE_CODE_API_KEY_FILE_DESCRIPTOR", "description": "API 키 파일 디스크립터 (보안 FD 전달)" },
+      { "key": "CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR", "description": "OAuth 토큰 FD" },
+      { "key": "CLAUDE_CODE_API_KEY_HELPER_TTL_MS", "description": "API 키 헬퍼 TTL ms (자동 갱신 주기)" },
+      { "key": "MCP_CLIENT_SECRET", "description": "MCP OAuth 클라이언트 시크릿 (런타임 주입)" },
+      { "key": "MCP_XAA_IDP_CLIENT_SECRET", "description": "XAA(Cross-Agent Authentication) IdP 클라이언트 시크릿" },
+      { "key": "MCP_OAUTH_CALLBACK_PORT", "description": "MCP OAuth 콜백 포트 오버라이드" },
+      { "key": "MCP_TIMEOUT", "description": "MCP 서버 연결 타임아웃" },
+      { "key": "MCP_TOOL_TIMEOUT", "description": "MCP 도구 실행 타임아웃" },
+      { "key": "MCP_REMOTE_SERVER_CONNECTION_BATCH_SIZE", "description": "원격 MCP 서버 배치 연결 크기" },
+      { "key": "MCP_SERVER_CONNECTION_BATCH_SIZE", "description": "로컬 MCP 서버 배치 연결 크기" },
+      { "key": "CLAUDE_CODE_MCP_INSTR_DELTA", "description": "MCP instruction delta 강제 비활성화 (falsy → basalt_3kr 게이트 우선)" },
+      { "key": "OTEL_LOG_TOOL_CONTENT", "description": "OTel 로그에 도구 실행 내용 전체 포함 (민감정보 주의)" },
+      { "key": "OTEL_LOG_TOOL_DETAILS", "description": "OTel 로그에 도구 상세 정보 포함" },
+      { "key": "OTEL_LOG_USER_PROMPTS", "description": "OTel 로그에 사용자 프롬프트 전체 포함" },
+      { "key": "BETA_TRACING_ENDPOINT", "description": "베타 추적 전용 OTLP 엔드포인트" },
+      { "key": "ENABLE_BETA_TRACING_DETAILED", "description": "상세 베타 추적 활성화" },
+      { "key": "ENABLE_ENHANCED_TELEMETRY_BETA", "description": "강화 텔레메트리 베타 활성화" },
+      { "key": "DISABLE_TELEMETRY", "description": "텔레메트리 완전 비활성화" },
+      { "key": "USE_STAGING_OAUTH", "description": "스테이징 OAuth 서버 사용 (api-staging.anthropic.com)" },
+      { "key": "USE_LOCAL_OAUTH", "description": "로컬 OAuth 서버 사용 (개발용)" },
+      { "key": "CLAUDE_LOCAL_OAUTH_API_BASE", "description": "로컬 OAuth API 베이스 URL" },
+      { "key": "CLAUDE_LOCAL_OAUTH_APPS_BASE", "description": "로컬 OAuth 앱 베이스 URL" },
+      { "key": "CLAUDE_LOCAL_OAUTH_CONSOLE_BASE", "description": "로컬 OAuth 콘솔 베이스 URL" },
+      { "key": "DISABLE_INTERLEAVED_THINKING", "description": "인터리브드 thinking 비활성화" },
+      { "key": "DISABLE_PROMPT_CACHING", "description": "프롬프트 캐싱 전체 비활성화" },
+      { "key": "DISABLE_PROMPT_CACHING_HAIKU", "description": "Haiku 모델 프롬프트 캐싱 비활성화" },
+      { "key": "DISABLE_PROMPT_CACHING_OPUS", "description": "Opus 모델 프롬프트 캐싱 비활성화" },
+      { "key": "DISABLE_PROMPT_CACHING_SONNET", "description": "Sonnet 모델 프롬프트 캐싱 비활성화" },
+      { "key": "ENABLE_PROMPT_CACHING_1H_BEDROCK", "description": "Bedrock에서 1시간 프롬프트 캐싱 활성화 (기본 비활성)" },
+      { "key": "CLAUDE_CODE_DISABLE_1M_CONTEXT", "description": "1M 컨텍스트 윈도우 비활성화 (128k로 강제 제한)" },
+      { "key": "CLAUDE_CODE_ALWAYS_ENABLE_EFFORT", "description": "effort 레벨 UI 항상 표시" },
+      { "key": "CLAUDE_CODE_PLAN_V2_AGENT_COUNT", "description": "Plan v2에서 실행할 에이전트 수" },
+      { "key": "CLAUDE_CODE_PLAN_V2_EXPLORE_AGENT_COUNT", "description": "Plan v2 탐색 단계 에이전트 수" },
+      { "key": "CLAUDE_CODE_PLAN_MODE_INTERVIEW_PHASE", "description": "플랜 모드 인터뷰 단계 활성화 (요구사항 수집 → 플랜 생성 2단계)" },
+      { "key": "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS", "description": "실험적 에이전트 팀 기능 활성화" },
+      { "key": "CLAUDE_CODE_IS_COWORK", "description": "협업(cowork) 모드 강제 활성화" },
+      { "key": "CLAUDE_CODE_USE_COWORK_PLUGINS", "description": "cowork 플러그인 로드 활성화" },
+      { "key": "CLAUDE_CODE_AUTO_BACKGROUND_TASKS", "description": "백그라운드 태스크 자동 전환 활성화" },
+      { "key": "CLAUDE_CODE_ENABLE_TASKS", "description": "태스크 시스템 활성화" },
+      { "key": "DISABLE_AUTO_COMPACT", "description": "자동 압축 비활성화" },
+      { "key": "DISABLE_CLAUDE_CODE_SM_COMPACT", "description": "세션 메모리 압축 비활성화" },
+      { "key": "ENABLE_CLAUDE_CODE_SM_COMPACT", "description": "세션 메모리 압축 강제 활성화" },
+      { "key": "CLAUDE_CODE_DISABLE_FAST_MODE", "description": "Fast mode(Penguin mode) 완전 비활성화" },
+      { "key": "CLAUDE_CODE_DISABLE_THINKING", "description": "extended thinking 완전 비활성화" },
+      { "key": "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING", "description": "adaptive thinking 비활성화" },
+      { "key": "CLAUDE_CODE_DISABLE_ADVISOR_TOOL", "description": "advisor(상담) 도구 비활성화" },
+      { "key": "CLAUDE_CODE_DISABLE_AUTO_MEMORY", "description": "자동 메모리(Dream) 비활성화" },
+      { "key": "CLAUDE_CODE_DISABLE_BACKGROUND_TASKS", "description": "백그라운드 태스크 비활성화" },
+      { "key": "CLAUDE_CODE_DISABLE_CRON", "description": "KAIROS 크론 스케줄러 비활성화" },
+      { "key": "CLAUDE_CODE_DISABLE_ATTACHMENTS", "description": "첨부파일 기능 비활성화" },
+      { "key": "CLAUDE_CODE_DISABLE_CLAUDE_MDS", "description": "CLAUDE.md 파일 로드 비활성화" },
+      { "key": "CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS", "description": "git 지시사항 자동 주입 비활성화" },
+      { "key": "CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK", "description": "논스트리밍 폴백 비활성화" },
+      { "key": "CLAUDE_CODE_DISABLE_FILE_CHECKPOINTING", "description": "파일 히스토리 체크포인팅 비활성화" },
+      { "key": "CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING", "description": "SDK 파일 체크포인팅 활성화" },
+      { "key": "ENABLE_TOOL_SEARCH", "description": "도구 검색(Tool Search) 기능 활성화" },
+      { "key": "EMBEDDED_SEARCH_TOOLS", "description": "임베디드 검색 도구 활성화" },
+      { "key": "ENABLE_CLAUDEAI_MCP_SERVERS", "description": "claude.ai MCP 서버 활성화" },
+      { "key": "ENABLE_MCP_LARGE_OUTPUT_FILES", "description": "MCP 대용량 출력 파일 저장 활성화" },
+      { "key": "CLAUDE_CODE_REMOTE", "description": "원격 실행 모드 활성화 (isRemoteMode=true)" },
+      { "key": "CLAUDE_CODE_REMOTE_SESSION_ID", "description": "원격 세션 ID" },
+      { "key": "CLAUDE_CODE_REMOTE_ENVIRONMENT_TYPE", "description": "원격 환경 종류 식별자" },
+      { "key": "CLAUDE_CODE_REMOTE_MEMORY_DIR", "description": "원격 모드 메모리 디렉토리 경로" },
+      { "key": "CLAUDE_CODE_REMOTE_SEND_KEEPALIVES", "description": "원격 세션 keepalive 전송 활성화" },
+      { "key": "CLAUBBIT", "description": "미공개 내부 플래그 (Claubbit — 목적 불명확, 내부 테스트 관련 추정)" },
+      { "key": "DEMO_VERSION", "description": "데모 버전 모드 (IS_DEMO와 별개)" },
+      { "key": "IS_DEMO", "description": "데모 환경 플래그" },
+      { "key": "IS_SANDBOX", "description": "샌드박스 환경 플래그" },
+      { "key": "SWE_BENCH_RUN_ID", "description": "SWE-Bench 자동화 평가 실행 ID (텔레메트리에 기록)" },
+      { "key": "SWE_BENCH_INSTANCE_ID", "description": "SWE-Bench 인스턴스 ID" },
+      { "key": "SWE_BENCH_TASK_ID", "description": "SWE-Bench 태스크 ID" },
+      { "key": "CLAUDE_CODE_ENVIRONMENT_KIND", "description": "환경 종류 식별자 (ci/local/codespaces 등)" },
+      { "key": "CLAUDE_CODE_ENVIRONMENT_RUNNER_VERSION", "description": "환경 러너 버전" },
+      { "key": "CLAUDE_CODE_AGENT_SDK_CLIENT_APP", "description": "Agent SDK 클라이언트 앱 식별자" },
+      { "key": "CLAUDE_CODE_AGENT_SDK_DISABLE_BUILTIN_AGENTS", "description": "Agent SDK 내장 에이전트 비활성화" },
+      { "key": "CLAUDE_CODE_AGENT_SDK_MCP_NO_PREFIX", "description": "Agent SDK MCP 도구 접두사 비활성화" },
+      { "key": "CLAUDE_AGENT_SDK_VERSION", "description": "Agent SDK 버전 문자열 (텔레메트리 기록)" },
+      { "key": "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "description": "비필수 네트워크 트래픽 비활성화 (업데이트 체크, 텔레메트리 등)" },
+      { "key": "USE_API_CONTEXT_MANAGEMENT", "description": "API 레벨 컨텍스트 관리 활성화 (서버사이드 압축)" },
+      { "key": "DISABLE_COST_WARNINGS", "description": "비용 경고 메시지 비활성화" },
+      { "key": "CLAUDE_CODE_PWSH_PARSE_TIMEOUT_MS", "description": "PowerShell 명령 파싱 타임아웃 ms" },
+      { "key": "CLAUDE_CODE_USE_POWERSHELL_TOOL", "description": "PowerShell 도구 활성화 (Windows)" },
+      { "key": "CLAUDE_CODE_GIT_BASH_PATH", "description": "Git Bash 실행파일 경로 (Windows WSL)" },
+      { "key": "COMPUTER_USE_INPUT_NODE_PATH", "description": "macOS Computer Use 입력 제어 노드 경로" },
+      { "key": "COMPUTER_USE_SWIFT_NODE_PATH", "description": "macOS Computer Use Swift 바이너리 노드 경로" },
+      { "key": "AUDIO_CAPTURE_NODE_PATH", "description": "음성 캡처 노드 경로" },
+      { "key": "MODIFIERS_NODE_PATH", "description": "키보드 수정자 키 노드 경로 (macOS)" },
+      { "key": "URL_HANDLER_NODE_PATH", "description": "URL 핸들러 노드 경로" },
+      { "key": "CLAUDE_TRUSTED_DEVICE_TOKEN", "description": "신뢰 기기 토큰 (2FA 우회용 장기 토큰 추정)" },
+      { "key": "CLAUDE_CODE_ADDITIONAL_PROTECTION", "description": "추가 보안 보호 레이어 활성화" }
+    ]
+  },
+
+  "internal_mcp_endpoints": {
+    "category": "Internal MCP Endpoints",
+    "description": "cli.js에서 발견된 mcp__ 형식의 내부 엔드포인트 (42개 제어 도구 외 추가 발견)",
+    "claude_in_chrome": [
+      { "key": "mcp__claude-in-chrome__gif_creator", "description": "Chrome 탭에서 GIF 생성 (미문서 — 브라우저 화면 녹화 후 GIF 변환)" },
+      { "key": "mcp__claude-in-chrome__javascript_tool", "description": "Chrome 탭 내 JavaScript 실행" },
+      { "key": "mcp__claude-in-chrome__read_console_messages", "description": "브라우저 콘솔 메시지 읽기" },
+      { "key": "mcp__claude-in-chrome__tabs_context_mcp", "description": "현재 탭 컨텍스트 조회" },
+      { "key": "mcp__claude-in-chrome__tabs_create_mcp", "description": "새 탭 생성" }
+    ],
+    "ide_integration": [
+      { "key": "mcp__ide__executeCode", "description": "IDE 내 코드 실행 (VS Code/JetBrains 확장과 통신)" },
+      { "key": "mcp__ide__getDiagnostics", "description": "IDE 진단 정보(컴파일 오류, 타입 오류 등) 조회" }
+    ],
+    "slack_integration": [
+      { "key": "mcp__claude_ai_Slack__slack_send_message", "description": "claude.ai Slack 앱을 통한 메시지 전송 (공식 채널)" },
+      { "key": "mcp__slack__send_message", "description": "일반 Slack MCP 서버 메시지 전송" }
+    ]
+  },
+
+  "bypass_logic": {
+    "category": "Bypass Logic & Security Bypass",
+    "description": "보안 검사, 샌드박스, 권한 검사를 우회하는 하드코딩된 로직",
+    "sandbox_bypass": {
+      "description": "dangerouslyDisableSandbox 파라미터 허용 조건 (AI 프롬프트에 하드코딩됨)",
+      "allowed_conditions": [
+        "사용자가 명시적으로 sandbox bypass를 요청한 경우",
+        "명령이 실패했고 sandbox 오류 증거가 있을 때 (Unix socket 오류, 네트워크 호스트 거부 등) — 즉시 retry with dangerouslyDisableSandbox:true"
+      ],
+      "allowed_error_patterns": [
+        "Unix socket connection errors",
+        "Network: Unable to resolve hosts",
+        "Permission denied errors"
+      ],
+      "note": "allowUnsandboxedCommands 설정이 false면 dangerouslyDisableSandbox 파라미터 완전 무시"
+    },
+    "bypass_permissions_mode": {
+      "description": "sessionBypassPermissionsMode=true 시 모든 도구 실행 권한 확인 스킵",
+      "activation": [
+        "CLAUDE_CODE_DISABLE_COMMAND_INJECTION_CHECK 환경변수",
+        "bypassPermissions 모드 (migrate_bypass_permissions_accepted 이벤트)",
+        "tengu_disable_bypass_permissions_mode 플래그로 재비활성화 가능"
+      ]
+    },
+    "hardcoded_trusted_domains": {
+      "description": "WebSearch/WebFetch에서 허용된 기본 도메인 화이트리스트 (코드에 하드코딩)",
+      "anthropic_owned": [
+        "anthropic.com", ".anthropic.com", "api.anthropic.com",
+        "platform.claude.com", "code.claude.com", "mcp-proxy.anthropic.com"
+      ],
+      "cloud_providers": [
+        "amazonaws.com", "googleapis.com", "cloud.google.com",
+        ".azuredatabricks.net", ".ciamlogin.com", ".onmicrosoft.com",
+        "login.microsoft.com", "login.microsoftonline.com", "sts.windows.net"
+      ],
+      "dev_resources": [
+        "github.com", "www.github.com", "api.github.com",
+        "pypi.org", "registry.npmjs.org", "pkg.go.dev",
+        "index.crates.io", "nuget.org", "maven.apache.org"
+      ]
+    },
+    "auth_skip_flags": {
+      "description": "인증을 완전히 스킵하는 환경변수들",
+      "vars": [
+        "CLAUDE_CODE_SKIP_BEDROCK_AUTH",
+        "CLAUDE_CODE_SKIP_VERTEX_AUTH",
+        "CLAUDE_CODE_SKIP_FOUNDRY_AUTH"
+      ]
+    }
+  },
+
+  "undisclosed_systems": {
+    "category": "Undisclosed Internal Systems",
+
+    "kairos_system": {
+      "name": "KAIROS",
+      "description": "자율 원격 에이전트 실행 시스템. kairosActive=true 시 Brief UI로 전환되고 크론 스케줄러 활성화. 일반 대화형 모드와 완전히 분리된 실행 루프.",
+      "activation": "setKairosActive(true) 또는 kairosEnabled 상태 플래그",
+      "cron_config": {
+        "jitter_default_ms": 60000,
+        "max_age_ms": 1800000,
+        "one_shot_max_ms": 90000,
+        "one_shot_floor_ms": 0,
+        "one_shot_minute_mod": 30,
+        "recurring_max_age_ms": 604800000
+      },
+      "brief_mode": "CLAUDE_CODE_BRIEF env 또는 tengu_kairos_brief 플래그로 활성화 — 사용자 입력 대신 오버라이드 메시지 표시",
+      "telemetry_events": ["tengu_kairos_brief", "tengu_kairos_brief_config", "tengu_kairos_cron", "tengu_kairos_cron_config", "tengu_kairos_cron_durable"]
+    },
+
+    "ultraplan_system": {
+      "name": "UltraPlan",
+      "description": "원격 클라우드 세션에서 실행되는 장기 계획 에이전트. ultraplanPhase 상태 머신으로 제어.",
+      "phases": ["plan_ready", "needs_input", "running"],
+      "poll_interval_ms": 3000,
+      "teleport_signal": "__ULTRAPLAN_TELEPORT_LOCAL__",
+      "note": "거부 피드백에 __ULTRAPLAN_TELEPORT_LOCAL__ 포함 시 플랜을 로컬로 텔레포트 — 구현 금지 시그널",
+      "remote_task_types": ["remote-agent", "ultraplan", "ultrareview", "autofix-pr", "background-pr"]
+    },
+
+    "ultrathink_system": {
+      "name": "UltraThink",
+      "description": "사용자 프롬프트에서 'ultrathink' 키워드 감지 시 해당 턴에만 effort=high 강제 적용",
+      "detection": "/\\bultrathink\\b/i 정규식",
+      "gate": "tengu_turtle_carbon 플래그로 활성화/비활성화",
+      "effect": "ultrathink_effort 이벤트 발생 → 해당 턴 thinking budget 최대화"
+    },
+
+    "voice_stream_system": {
+      "name": "Voice Stream (STT)",
+      "description": "WebSocket 기반 실시간 음성-텍스트 변환 시스템. Deepgram STT 엔진 사용.",
+      "endpoint": "VOICE_STREAM_BASE_URL (기본: BASE_API_URL의 https→wss 치환)",
+      "stt_provider_default": "deepgram",
+      "stt_provider_experimental": "deepgram-nova3 (tengu_cobalt_frost 게이트)",
+      "conversation_engine": "tengu_cobalt_frost 활성화 시 use_conversation_engine=true",
+      "finalize_timeouts": "FINALIZE_TIMEOUTS_MS 상수",
+      "auth": "OAuth accessToken Bearer 인증",
+      "keepalive": "TJK 상수 주기적 전송",
+      "message_types": ["TranscriptText", "TranscriptEndpoint", "TranscriptError", "error"],
+      "parameters": ["endpointing_ms:300", "utterance_end_ms:1000", "language(기본:en)", "keyterms(배열)"]
+    },
+
+    "speculation_system": {
+      "name": "Speculation (Predictive Pre-execution)",
+      "description": "사용자 입력 예측 기반 도구 결과 사전 계산 시스템. 파이프라인 제안(pipelinedSuggestion) 생성.",
+      "state": "speculation.status: idle | active",
+      "storage": "speculation/ 디렉토리에 PID 격리 저장",
+      "telemetry": "tengu_speculation (outcome, speculation_id)",
+      "function": "czz() — 도구 사용 컨텍스트 기반 예측 실행"
+    },
+
+    "thinkback_system": {
+      "name": "Thinkback",
+      "description": "별도 플러그인(player.js)으로 구현된 사고 과정 재생 시스템. /plugin으로 수동 설치 가능.",
+      "plugin_name": "thinkback",
+      "version_accessor": "tCK() → 'thinkback@{version}'",
+      "install_path": "marketplace 또는 소스 인클루드",
+      "note": "마켓플레이스에서 자동 설치되거나 /plugin 명령으로 수동 활성화"
+    },
+
+    "grove_policy_system": {
+      "name": "Grove Policy",
+      "description": "사용자 데이터 활용 동의 관리 시스템 (Help Improve Claude 설정). grace period 지원.",
+      "states": ["accept_opt_in", "accept_opt_out", "defer", "escape"],
+      "settings_key": "grove_enabled",
+      "locations": ["onboarding", "policy_update_modal", "settings"],
+      "telemetry_events": ["tengu_grove_policy_viewed", "tengu_grove_policy_submitted", "tengu_grove_policy_dismissed", "tengu_grove_policy_escaped", "tengu_grove_policy_toggled", "tengu_grove_print_viewed"]
+    },
+
+    "penguin_mode_system": {
+      "name": "Penguin Mode (Fast Mode internal name)",
+      "description": "Fast Mode의 내부 코드명. 조직 단위 활성화/비활성화 지원. penguinModeOrgEnabled로 org 레벨 제어.",
+      "api_endpoint": "/api/claude_code_penguin_mode",
+      "disabled_reasons": ["out_of_credits", "preference", "cooldown", "unknown"],
+      "cooldown_sessions": "비활성화 후 cooldown 세션 수",
+      "org_control": "penguinModeOrgEnabled 플래그로 조직 전체 on/off"
+    },
+
+    "xaa_system": {
+      "name": "XAA (Cross-Agent Authentication, SEP-990)",
+      "description": "에이전트 간 인증 프로토콜. IdP(Identity Provider) 연동으로 에이전트 신원 검증.",
+      "env_vars": ["CLAUDE_CODE_ENABLE_XAA", "MCP_XAA_IDP_CLIENT_SECRET"],
+      "config_key": "xaa",
+      "spec": "SEP-990",
+      "note": "IdP가 RFC 8252 포트-애니 매칭을 지원하지 않을 때만 MCP_OAUTH_CALLBACK_PORT 필요"
+    },
+
+    "swe_bench_mode": {
+      "name": "SWE-Bench Integration",
+      "description": "소프트웨어 엔지니어링 벤치마크(SWE-bench) 자동 평가 모드. 세 개의 ID를 텔레메트리에 기록.",
+      "env_vars": ["SWE_BENCH_RUN_ID", "SWE_BENCH_INSTANCE_ID", "SWE_BENCH_TASK_ID"],
+      "telemetry_fields": ["swe_bench_run_id", "swe_bench_instance_id", "swe_bench_task_id"],
+      "note": "모든 API 이벤트에 자동 포함됨 — 벤치마크 실행 감지 가능"
+    },
+
+    "file_history_system": {
+      "name": "File History & Checkpointing",
+      "description": "파일 편집 시 스냅샷 저장 및 롤백 시스템. SDK 모드와 일반 모드 별도 제어.",
+      "env_control": ["CLAUDE_CODE_DISABLE_FILE_CHECKPOINTING", "CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING"],
+      "telemetry_events": ["tengu_file_history_snapshot_success", "tengu_file_history_snapshot_failed", "tengu_file_history_rewind_success", "tengu_file_history_rewind_failed", "tengu_file_history_backup_file_created", "tengu_file_history_backup_deleted_file"],
+      "functions": "OK6() — 스냅샷, y5K() — 복원",
+      "storage": "trackedFileBackups 맵"
+    },
+
+    "ccr_v2_system": {
+      "name": "CCR V2 (Cloud Code Review V2)",
+      "description": "원격 리뷰 세션 하이드레이션 시스템 V2. 서브에이전트 항목을 세션 스토어에 복원.",
+      "env_vars": ["CCR_ENABLE_BUNDLE", "CCR_FORCE_BUNDLE", "CCR_UPSTREAM_PROXY_ENABLED", "CLAUDE_CODE_USE_CCR_V2", "CLAUDE_CODE_BRIDGE_USE_CCR_V2"],
+      "hydration": "최대 N개 서브에이전트 항목을 M개 에이전트에 걸쳐 복원 (409 충돌 시 분기)",
+      "gate": "tengu_ccr_bundle_seed_enabled, tengu_bridge_repl_v2"
+    },
+
+    "prompt_cache_1h_system": {
+      "name": "1-Hour Ephemeral Prompt Cache",
+      "description": "anthropic-beta: prompt-caching-2024-07-31 확장으로 1시간짜리 캐시 지원. 기본적으로 Bedrock에서 비활성화.",
+      "env_enable": "ENABLE_PROMPT_CACHING_1H_BEDROCK",
+      "gate": "tengu_prompt_cache_1h_config",
+      "allowlist_field": "promptCache1hAllowlist (Vj7 상태 필드)",
+      "eligible_field": "promptCache1hEligible",
+      "token_field": "ephemeral_1h_input_tokens (usage 객체)"
+    },
+
+    "opusplan_model": {
+      "name": "opusplan (Dynamic Model Selector)",
+      "description": "plan 모드일 때 Opus 4.6, 그 외에는 Sonnet 4.6을 자동 선택하는 가상 모델 식별자.",
+      "model_id": "opusplan",
+      "logic": "permissionMode==='plan' && !exceeds200kTokens → Opus 4.6, else Sonnet 4.6",
+      "display_name": "Opus Plan Mode",
+      "valid_model_strings": ["sonnet", "opus", "haiku", "best", "sonnet[1m]", "opus[1m]", "opusplan"]
+    },
+
+    "effort_level_system": {
+      "name": "Effort Level System",
+      "description": "AI 사고 effort를 low/medium/high/max로 제어. thinking budget과 직결됨.",
+      "levels": ["low", "medium", "high", "max"],
+      "env_override": "CLAUDE_CODE_EFFORT_LEVEL (unset/auto → null로 처리)",
+      "persistence": "userSettings.effortLevel에 저장",
+      "ultrathink_trigger": "프롬프트에서 'ultrathink' 키워드 감지 시 해당 턴 'high' 강제 적용",
+      "model_support": "supportsEffort, supportedEffortLevels 모델 속성으로 per-model 제어"
+    },
+
+    "lodestone_system": {
+      "name": "Lodestone",
+      "description": "딥링크 레지스트리 시스템. .deep-link-register 파일 생성으로 OS 딥링크 핸들러 등록.",
+      "gate": "tengu_lodestone_enabled",
+      "config": "disableDeepLinkRegistration==='disable' 시 완전 비활성화"
+    },
+
+    "bughunter_system": {
+      "name": "BugHunter (Remote Code Review Agent)",
+      "description": "GitHub PR 자동 버그 탐지 원격 에이전트. BUGHUNTER_DEV_BUNDLE_B64로 개발자 번들 교체 가능.",
+      "env_vars": {
+        "BUGHUNTER_DEV_BUNDLE_B64": "Base64 개발자 번들 주입 — 프로덕션 리뷰 에이전트 코드 교체",
+        "BUGHUNTER_AGENT_TIMEOUT": "에이전트 타임아웃 초 (기본 600, 최대 1800)",
+        "BUGHUNTER_TOTAL_WALLCLOCK": "전체 wallclock 분 (기본 22~27)"
+      },
+      "preconditions": "github.com 호스트 + gh auth 필요",
+      "task_type": "ultrareview"
+    }
+  },
+
+  "internal_api_endpoints": {
+    "category": "Hardcoded Internal API Endpoints",
+    "undocumented": [
+      { "url": "https://api.anthropic.com/api/claude_code_penguin_mode", "description": "Fast Mode(Penguin Mode) org 활성화 상태 조회 (비문서 내부 API)" },
+      { "url": "https://api.anthropic.com/api/claude_code/metrics", "description": "Claude Code 사용량 메트릭 전송" },
+      { "url": "https://api.anthropic.com/api/claude_code/organizations/metrics_enabled", "description": "조직별 메트릭 활성화 여부 조회" },
+      { "url": "https://api.anthropic.com/api/claude_code_shared_session_transcripts", "description": "공유 세션 트랜스크립트 저장 (비문서)" },
+      { "url": "https://api.anthropic.com/api/claude_cli_feedback", "description": "CLI 피드백 제출" },
+      { "url": "https://api.anthropic.com/api/oauth/claude_cli/create_api_key", "description": "OAuth 흐름에서 CLI API 키 생성" },
+      { "url": "https://api.anthropic.com/api/oauth/claude_cli/roles", "description": "OAuth 사용자 역할 조회 (subscription tier 등)" },
+      { "url": "https://api.anthropic.com/api/web/domain_info", "description": "도메인 정보 조회 (WebSearch 허용 도메인 체크 추정)" },
+      { "url": "https://api.anthropic.com/mcp-registry/v0/servers", "description": "공식 MCP 서버 레지스트리 (마켓플레이스 서버 목록)" },
+      { "url": "https://api.anthropic.com/v1/models/claude-opus-4-6", "description": "특정 모델 정보 직접 조회 엔드포인트" },
+      { "url": "https://mcp-proxy.anthropic.com", "description": "Anthropic MCP 프록시 서버 (claude.ai MCP 서버 중계)" },
+      { "url": "https://beacon.claude-ai.staging.ant.dev", "description": "스테이징 환경 비콘 엔드포인트 (내부 모니터링)" },
+      { "url": "https://api-staging.anthropic.com", "description": "스테이징 API 서버 (USE_STAGING_OAUTH 활성화 시)" },
+      { "url": "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases", "description": "Claude Code 바이너리 배포 GCS 버킷 (하드코딩된 버킷 ID)" },
+      { "url": "https://downloads.claude.ai/claude-code-releases/plugins/claude-plugins-official", "description": "공식 플러그인 다운로드 엔드포인트" },
+      { "url": "https://raw.githubusercontent.com/anthropics/claude-plugins-official/refs/heads/stats/stats/plugin-installs.json", "description": "플러그인 설치 통계 JSON (공개 GitHub)" },
+      { "url": "https://http-intake.logs.us5.datadoghq.com/api/v2/logs", "description": "Datadog 로그 인테이크 (비문서 — CLAUDE_CODE_DATADOG_FLUSH_INTERVAL_MS 환경변수와 연동)" },
+      { "url": "https://app.corridor.dev/api/mcp", "description": "Corridor dev MCP 엔드포인트 (서드파티 연동)" },
+      { "url": "https://platform.claude.com/v1/oauth/token", "description": "OAuth 토큰 교환 엔드포인트" }
+    ]
+  },
+
+  "session_source_values": {
+    "category": "sessionSource / clientType Internal Values",
+    "description": "G8 전역 상태의 clientType과 sessionSource에 허용된 내부 식별자 값",
+    "clientType_values": ["cli", "vscode", "jetbrains", "ccr", "sdk", "web", "desktop"],
+    "sessionSource_values": ["remote", "bridge", "repl", "teleport", "kairos", "ccr_v2", "worktree"],
+    "mainThreadAgentType_values": ["remote-agent", "ultraplan", "ultrareview", "autofix-pr", "background-pr", "local_worktree"]
+  },
+
+  "hook_system": {
+    "category": "Hooks System",
+    "description": "registeredHooks를 통해 외부에서 에이전트 동작에 개입하는 이벤트 훅 시스템",
+    "event_types": [
+      { "event": "PreToolUse", "description": "도구 실행 전 — 도구 입력 검사, 거부, 수정 가능" },
+      { "event": "PostToolUse", "description": "도구 실행 후 — 결과 가공 가능" },
+      { "event": "UserPromptSubmit", "description": "사용자 프롬프트 제출 시 (user-prompt-submit-hook)" },
+      { "event": "Stop", "description": "에이전트 종료 시 (stop hook, SESSIONEND_HOOKS_TIMEOUT_MS 제한)" },
+      { "event": "SubagentStop", "description": "서브에이전트 종료 시" },
+      { "event": "Notification", "description": "알림 이벤트 (외부 알림 시스템 연동)" },
+      { "event": "PreCompact", "description": "컨텍스트 압축 전 (압축 방식 제어 가능)" }
+    ],
+    "env_control": "CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS"
+  }
+}

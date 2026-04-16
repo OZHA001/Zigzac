@@ -1,0 +1,606 @@
+{
+  "_meta": {
+    "source": "sdk-tools.d.ts (Claude Code CLI v2.1.88)",
+    "generated": "2026-04-15",
+    "spec": "OpenAPI 3.0 / JSON Schema Draft-07 — Gemini Pro Function Calling compatible",
+    "tool_count": 21,
+    "categories": {
+      "agent_orchestration": ["Agent", "TaskOutput", "TaskStop"],
+      "filesystem": ["FileRead", "FileEdit", "FileWrite", "Glob", "Grep"],
+      "notebook": ["NotebookEdit"],
+      "mcp": ["ListMcpResources", "ReadMcpResource", "Mcp"],
+      "web": ["WebFetch", "WebSearch"],
+      "ui_interaction": ["AskUserQuestion", "ExitPlanMode"],
+      "config": ["Config"],
+      "worktree": ["EnterWorktree", "ExitWorktree"],
+      "task_mgmt": ["TodoWrite"]
+    }
+  },
+  "tools": [
+    {
+      "name": "Agent",
+      "description": "Spawn a specialized subagent to autonomously handle a complex, multi-step task. The subagent runs with its own context and tool access, reports back a single result. Use background mode for fire-and-forget tasks. Use isolation='worktree' for isolated repository copies.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "A short (3-5 word) description of the task the agent will perform. Used for display/logging."
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The full task description for the agent to perform. Be specific and include all context the agent needs."
+          },
+          "subagent_type": {
+            "type": "string",
+            "description": "The type of specialized agent to use. If omitted, a general-purpose agent is used. Examples: 'general-purpose', 'code-reviewer', 'test-runner'."
+          },
+          "model": {
+            "type": "string",
+            "description": "Optional model override for this agent. Takes precedence over the agent definition's model frontmatter.",
+            "enum": ["sonnet", "opus", "haiku"]
+          },
+          "run_in_background": {
+            "type": "boolean",
+            "description": "Set to true to run this agent in the background. You will be notified when it completes. Do not sleep or poll."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name for the spawned agent. Makes it addressable via SendMessage({to: name}) while running."
+          },
+          "team_name": {
+            "type": "string",
+            "description": "Team name for spawning. Uses current team context if omitted."
+          },
+          "mode": {
+            "type": "string",
+            "description": "Permission mode for spawned teammate.",
+            "enum": ["acceptEdits", "bypassPermissions", "default", "dontAsk", "plan"]
+          },
+          "isolation": {
+            "type": "string",
+            "description": "Isolation mode. 'worktree' creates a temporary git worktree so the agent works on an isolated copy of the repo.",
+            "enum": ["worktree"]
+          }
+        },
+        "required": ["description", "prompt"]
+      }
+    },
+    {
+      "name": "Bash",
+      "description": "Execute a bash shell command and return its stdout, stderr, and exit code. The working directory persists between commands but shell state does not. Avoid interactive commands. Use run_in_background for long-running processes.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "The bash command to execute. Quote file paths with spaces. Chain dependent commands with &&."
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Optional timeout in milliseconds. Maximum 600000 (10 minutes). Default is 120000 (2 minutes).",
+            "minimum": 1,
+            "maximum": 600000
+          },
+          "description": {
+            "type": "string",
+            "description": "Clear, concise description of what this command does in active voice. Never use words like 'complex' or 'risk'. Keep brief for simple commands (5-10 words), add context for piped/obscure commands."
+          },
+          "run_in_background": {
+            "type": "boolean",
+            "description": "Set to true to run this command in the background. Use TaskOutput to check results later."
+          },
+          "dangerouslyDisableSandbox": {
+            "type": "boolean",
+            "description": "Set to true to dangerously override sandbox mode and run commands without sandboxing. Use with extreme caution."
+          }
+        },
+        "required": ["command"]
+      }
+    },
+    {
+      "name": "TaskOutput",
+      "description": "Retrieve output from a background task (previously started with Bash or Agent run_in_background=true). Can optionally block until the task completes or until a timeout.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "The task ID to get output from. Obtained from the backgroundTaskId field of a previous Bash or Agent response."
+          },
+          "block": {
+            "type": "boolean",
+            "description": "Whether to wait for the task to complete before returning. If false, returns immediately with current output."
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Maximum wait time in milliseconds when block=true. The call returns after this duration even if task is still running."
+          }
+        },
+        "required": ["task_id", "block", "timeout"]
+      }
+    },
+    {
+      "name": "TaskStop",
+      "description": "Stop a running background task (shell command or agent) by its task ID. Sends SIGTERM to the process.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "The ID of the background task to stop."
+          },
+          "shell_id": {
+            "type": "string",
+            "description": "Deprecated: use task_id instead."
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "ExitPlanMode",
+      "description": "Exit plan mode, transitioning from planning phase to execution phase. Optionally specify allowed prompts that define what categories of actions are permitted during implementation without further approval.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "allowedPrompts": {
+            "type": "array",
+            "description": "Prompt-based permissions needed to implement the plan. Describe categories of actions rather than specific commands.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tool": {
+                  "type": "string",
+                  "description": "The tool this prompt applies to.",
+                  "enum": ["Bash"]
+                },
+                "prompt": {
+                  "type": "string",
+                  "description": "Semantic description of the action, e.g. 'run tests', 'install dependencies'."
+                }
+              },
+              "required": ["tool", "prompt"]
+            }
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "FileEdit",
+      "description": "Perform an exact string replacement in a file. The old_string must be unique within the file, or use replace_all=true to replace every occurrence. MUST read the file with FileRead before editing. Preferred over FileWrite for partial modifications.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "The absolute path to the file to modify. Must be an absolute path, not relative."
+          },
+          "old_string": {
+            "type": "string",
+            "description": "The exact text to find and replace. Must match exactly including whitespace and indentation. Must be unique in the file unless replace_all=true."
+          },
+          "new_string": {
+            "type": "string",
+            "description": "The text to replace old_string with. Must be different from old_string."
+          },
+          "replace_all": {
+            "type": "boolean",
+            "description": "If true, replace all occurrences of old_string in the file. Default is false (replace only the first/unique match)."
+          }
+        },
+        "required": ["file_path", "old_string", "new_string"]
+      }
+    },
+    {
+      "name": "FileRead",
+      "description": "Read the contents of a file at the given path. Supports text files, images (PNG/JPEG/GIF/WebP), PDFs, and Jupyter notebooks. For large files, use offset and limit to read specific sections. Returns content with line numbers.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "The absolute path to the file to read."
+          },
+          "offset": {
+            "type": "number",
+            "description": "The line number to start reading from (1-indexed). Only provide if the file is too large to read at once.",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "number",
+            "description": "The maximum number of lines to read. Only provide if the file is too large to read at once.",
+            "minimum": 1
+          },
+          "pages": {
+            "type": "string",
+            "description": "Page range for PDF files (e.g., '1-5', '3', '10-20'). Only applicable to PDF files. Maximum 20 pages per request.",
+            "pattern": "^\\d+(-\\d+)?$"
+          }
+        },
+        "required": ["file_path"]
+      }
+    },
+    {
+      "name": "FileWrite",
+      "description": "Write content to a file, creating it if it does not exist or overwriting it entirely if it does. Prefer FileEdit for modifying existing files. Use this only to create new files or for complete rewrites. MUST read existing file with FileRead before overwriting.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "The absolute path to the file to write. Must be absolute, not relative."
+          },
+          "content": {
+            "type": "string",
+            "description": "The complete content to write to the file. Overwrites any existing content."
+          }
+        },
+        "required": ["file_path", "content"]
+      }
+    },
+    {
+      "name": "Glob",
+      "description": "Fast file pattern matching across the codebase using glob patterns. Returns matching file paths sorted by modification time. Use for finding files by name patterns. More efficient than Bash find for file discovery.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "The glob pattern to match files against. Examples: '**/*.js', 'src/**/*.ts', '*.{json,yaml}'."
+          },
+          "path": {
+            "type": "string",
+            "description": "The directory to search in. If not specified, the current working directory is used. Must be a valid directory path if provided. Do NOT enter 'undefined' or 'null'."
+          }
+        },
+        "required": ["pattern"]
+      }
+    },
+    {
+      "name": "Grep",
+      "description": "Search file contents using ripgrep with full regex support. Supports glob filtering, file type filtering, context lines, case-insensitive search, and multiline patterns. More efficient than Bash grep. Returns matching lines, file paths, or counts depending on output_mode.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "The regular expression pattern to search for in file contents. Uses ripgrep syntax (not grep). Literal braces need escaping: use 'interface\\{\\}' to find 'interface{}'."
+          },
+          "path": {
+            "type": "string",
+            "description": "File or directory to search in. Defaults to current working directory."
+          },
+          "glob": {
+            "type": "string",
+            "description": "Glob pattern to filter which files are searched. Example: '*.js', '**/*.{ts,tsx}'. Maps to rg --glob."
+          },
+          "output_mode": {
+            "type": "string",
+            "description": "Output mode: 'content' shows matching lines with optional context, 'files_with_matches' shows only file paths (default), 'count' shows match counts per file.",
+            "enum": ["content", "files_with_matches", "count"]
+          },
+          "-B": {
+            "type": "number",
+            "description": "Number of lines to show BEFORE each match (rg -B). Requires output_mode: 'content', ignored otherwise.",
+            "minimum": 0
+          },
+          "-A": {
+            "type": "number",
+            "description": "Number of lines to show AFTER each match (rg -A). Requires output_mode: 'content', ignored otherwise.",
+            "minimum": 0
+          },
+          "-C": {
+            "type": "number",
+            "description": "Number of lines to show BEFORE and AFTER each match (alias for context). Requires output_mode: 'content'.",
+            "minimum": 0
+          },
+          "context": {
+            "type": "number",
+            "description": "Number of lines to show before and after each match (rg -C). Requires output_mode: 'content', ignored otherwise.",
+            "minimum": 0
+          },
+          "-n": {
+            "type": "boolean",
+            "description": "Show line numbers in output (rg -n). Requires output_mode: 'content', ignored otherwise. Defaults to true."
+          },
+          "-i": {
+            "type": "boolean",
+            "description": "Enable case-insensitive search (rg -i)."
+          },
+          "type": {
+            "type": "string",
+            "description": "File type filter (rg --type). Common types: js, py, rust, go, java, ts, cpp, c, json, yaml, md. More efficient than glob for standard file types."
+          },
+          "head_limit": {
+            "type": "number",
+            "description": "Limit output to first N lines/entries (equivalent to '| head -N'). Works across all output modes. Defaults to 250 when unspecified. Pass 0 for unlimited.",
+            "minimum": 0
+          },
+          "offset": {
+            "type": "number",
+            "description": "Skip first N lines/entries before applying head_limit (equivalent to '| tail -n +N | head -N'). Defaults to 0.",
+            "minimum": 0
+          },
+          "multiline": {
+            "type": "boolean",
+            "description": "Enable multiline mode where '.' matches newlines and patterns can span multiple lines (rg -U --multiline-dotall). Default: false."
+          }
+        },
+        "required": ["pattern"]
+      }
+    },
+    {
+      "name": "ListMcpResources",
+      "description": "List all resources exposed by connected MCP (Model Context Protocol) servers. Resources are data sources that can be read with ReadMcpResource. Optionally filter by server name.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "server": {
+            "type": "string",
+            "description": "Optional MCP server name to filter resources by. If omitted, lists resources from all connected servers."
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "ReadMcpResource",
+      "description": "Read the content of a specific resource from an MCP server. Resources are identified by a URI and served by a specific MCP server. Use ListMcpResources first to discover available resources.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "server": {
+            "type": "string",
+            "description": "The MCP server name that provides this resource."
+          },
+          "uri": {
+            "type": "string",
+            "description": "The resource URI to read. Obtained from the uri field in ListMcpResources output."
+          }
+        },
+        "required": ["server", "uri"]
+      }
+    },
+    {
+      "name": "Mcp",
+      "description": "Invoke any MCP (Model Context Protocol) tool. This is a generic pass-through for MCP tool calls. The actual parameters depend on the specific MCP tool being invoked.",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true,
+        "required": []
+      }
+    },
+    {
+      "name": "NotebookEdit",
+      "description": "Edit a cell in a Jupyter notebook (.ipynb file). Supports replacing, inserting, or deleting cells. The notebook_path must be absolute. When inserting, the new cell is placed after the cell identified by cell_id.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "notebook_path": {
+            "type": "string",
+            "description": "The absolute path to the Jupyter notebook file to edit. Must be absolute, not relative."
+          },
+          "cell_id": {
+            "type": "string",
+            "description": "The ID of the cell to edit (replace/delete), or the cell after which to insert a new cell. If omitted for insert, the new cell is added at the beginning."
+          },
+          "new_source": {
+            "type": "string",
+            "description": "The new source code or markdown content for the cell."
+          },
+          "cell_type": {
+            "type": "string",
+            "description": "The type of the cell. Defaults to the current cell type if editing. Required when edit_mode='insert'.",
+            "enum": ["code", "markdown"]
+          },
+          "edit_mode": {
+            "type": "string",
+            "description": "The type of edit: 'replace' replaces cell content (default), 'insert' adds a new cell after cell_id, 'delete' removes the cell.",
+            "enum": ["replace", "insert", "delete"]
+          }
+        },
+        "required": ["notebook_path", "new_source"]
+      }
+    },
+    {
+      "name": "TodoWrite",
+      "description": "Write/update the task todo list for the current session. Replaces the entire todo list with the provided array. Used to track in-progress work, pending tasks, and completed items.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "todos": {
+            "type": "array",
+            "description": "The complete updated todo list. Replaces any existing todos.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "content": {
+                  "type": "string",
+                  "description": "The text content of the todo item describing the task."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "The current status of the todo item.",
+                  "enum": ["pending", "in_progress", "completed"]
+                },
+                "activeForm": {
+                  "type": "string",
+                  "description": "The active form identifier for this todo item."
+                }
+              },
+              "required": ["content", "status", "activeForm"]
+            }
+          }
+        },
+        "required": ["todos"]
+      }
+    },
+    {
+      "name": "WebFetch",
+      "description": "Fetch content from a URL and apply a prompt to process/summarize it. Returns the processed result along with HTTP response code and content size. Use for reading documentation, APIs, or any web resource.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL to fetch content from. Must be a valid HTTP/HTTPS URL.",
+            "format": "uri"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The instruction/prompt to run on the fetched content. Describes what to extract or summarize from the page."
+          }
+        },
+        "required": ["url", "prompt"]
+      }
+    },
+    {
+      "name": "WebSearch",
+      "description": "Search the web using a query string. Returns search results including titles and URLs. Optionally restrict results to specific domains or exclude certain domains.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search query to use. Be specific for better results."
+          },
+          "allowed_domains": {
+            "type": "array",
+            "description": "If specified, only include search results from these domains. Example: ['docs.python.org', 'github.com'].",
+            "items": {
+              "type": "string"
+            }
+          },
+          "blocked_domains": {
+            "type": "array",
+            "description": "If specified, never include search results from these domains.",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "AskUserQuestion",
+      "description": "Present 1-4 structured questions to the user with predefined choice options. Each question shows as a chip/card UI with 2-4 selectable options. Supports multi-select and optional preview content per option. Use when a decision requires user input with clear bounded choices.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "questions": {
+            "type": "array",
+            "description": "Array of 1-4 questions to present to the user simultaneously.",
+            "minItems": 1,
+            "maxItems": 4,
+            "items": {
+              "type": "object",
+              "description": "A single question with choices for the user.",
+              "properties": {
+                "question": {
+                  "type": "string",
+                  "description": "The complete question text. Should be clear, specific, and end with a question mark. Example: 'Which library should we use for date formatting?'"
+                },
+                "header": {
+                  "type": "string",
+                  "description": "Very short label displayed as a chip/tag (max 12 chars). Examples: 'Auth method', 'Library', 'Approach'.",
+                  "maxLength": 12
+                },
+                "options": {
+                  "type": "array",
+                  "description": "The available choices for this question. Must have 2-4 options. Each option should be a distinct, mutually exclusive choice unless multiSelect is true. Do NOT include an 'Other' option — it is provided automatically.",
+                  "minItems": 2,
+                  "maxItems": 4,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string",
+                        "description": "Display text the user sees and selects. Should be concise (1-5 words) and clearly describe the choice."
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Explanation of what this option means or what will happen if chosen. Useful for describing trade-offs or implications."
+                      },
+                      "preview": {
+                        "type": "string",
+                        "description": "Optional preview content rendered when this option is focused. Use for mockups, code snippets, or visual comparisons that help users compare options."
+                      }
+                    },
+                    "required": ["label", "description"]
+                  }
+                },
+                "multiSelect": {
+                  "type": "boolean",
+                  "description": "Set to true to allow the user to select multiple options instead of just one. Use when choices are not mutually exclusive."
+                }
+              },
+              "required": ["question", "header", "options", "multiSelect"]
+            }
+          }
+        },
+        "required": ["questions"]
+      }
+    },
+    {
+      "name": "Config",
+      "description": "Get or set a Claude Code configuration setting. Omit value to get the current setting value. Provide value to update the setting. Examples of settings: 'theme', 'model', 'permissions.defaultMode'.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "setting": {
+            "type": "string",
+            "description": "The setting key to get or set. Supports dot notation for nested settings, e.g., 'permissions.defaultMode', 'model', 'theme'."
+          },
+          "value": {
+            "description": "The new value to set. Omit this field to get the current value instead of setting it.",
+            "oneOf": [
+              { "type": "string" },
+              { "type": "boolean" },
+              { "type": "number" }
+            ]
+          }
+        },
+        "required": ["setting"]
+      }
+    },
+    {
+      "name": "EnterWorktree",
+      "description": "Create and enter a new git worktree — an isolated copy of the repository on a separate branch. Useful for working on features or experiments without affecting the main working tree. The worktree is automatically cleaned up if no changes are made.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Optional name for the worktree. Each '/' separated segment may contain only letters, digits, dots, underscores, and dashes. Maximum 64 characters total. A random name is generated if not provided.",
+            "maxLength": 64,
+            "pattern": "^[a-zA-Z0-9._-]+(/[a-zA-Z0-9._-]+)*$"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "ExitWorktree",
+      "description": "Exit the current git worktree and return to the original working directory. Choose 'keep' to leave the worktree and its branch on disk for later use, or 'remove' to delete both. When removing, use discard_changes=true to force removal even with uncommitted work.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "'keep' leaves the worktree and branch on disk. 'remove' deletes both the worktree directory and its branch.",
+            "enum": ["keep", "remove"]
+          },
+          "discard_changes": {
+            "type": "boolean",
+            "description": "Required to be true when action is 'remove' and the worktree has uncommitted files or unmerged commits. The tool will refuse and list them if this is not set."
+          }
+        },
+        "required": ["action"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,595 @@
+{
+  "schema_source": "cli.js v2.1.88 — Vj7() state initializer (G8 global singleton)",
+  "extractor_note": "All fields extracted from Vj7() return object. Types and descriptions inferred from initialization values and usage in G8.* setter/getter functions.",
+  "total_fields": 89,
+  "fields": [
+    {
+      "field_name": "originalCwd",
+      "type": "string",
+      "default_value": "\"\" (set from process.cwd() via Tj7)",
+      "description": "세션 시작 시점의 절대 작업 디렉토리. NFC 정규화 적용. 세션 전체에서 원본 경로 참조용으로 보존되며 aR() setter로만 변경됨."
+    },
+    {
+      "field_name": "projectRoot",
+      "type": "string",
+      "default_value": "\"\" (same as originalCwd at init)",
+      "description": "프로젝트 루트 디렉토리. CLAUDE.md 탐색, 설정 파일 로드 기준점. bb6()로 업데이트."
+    },
+    {
+      "field_name": "totalCostUSD",
+      "type": "number",
+      "default_value": 0,
+      "description": "세션 전체 누적 API 비용 (USD). Un8(cost, usage, model)으로 모델별 사용 시마다 누적. SX6()로 턴 리셋. /cost 명령 표시에 사용."
+    },
+    {
+      "field_name": "totalAPIDuration",
+      "type": "number",
+      "default_value": 0,
+      "description": "세션 전체 API 호출 누적 소요 시간 (ms). Fn8(duration, durationWithoutRetries)로 누적. 재시도 시간 포함."
+    },
+    {
+      "field_name": "totalAPIDurationWithoutRetries",
+      "type": "number",
+      "default_value": 0,
+      "description": "재시도를 제외한 순수 API 호출 시간 (ms). 실제 모델 응답 대기 시간 측정용."
+    },
+    {
+      "field_name": "totalToolDuration",
+      "type": "number",
+      "default_value": 0,
+      "description": "세션 전체 도구 실행 누적 시간 (ms). a58(duration)으로 누적. turnToolDurationMs와 함께 증가되지만 턴 리셋 시 이 필드는 유지됨."
+    },
+    {
+      "field_name": "turnHookDurationMs",
+      "type": "number",
+      "default_value": 0,
+      "description": "현재 턴의 훅(hook) 실행 누적 시간 (ms). s58()로 증가, cn8()로 턴 종료 시 리셋."
+    },
+    {
+      "field_name": "turnToolDurationMs",
+      "type": "number",
+      "default_value": 0,
+      "description": "현재 턴의 도구 실행 누적 시간 (ms). a58()로 증가, 턴 리셋 시 초기화."
+    },
+    {
+      "field_name": "turnClassifierDurationMs",
+      "type": "number",
+      "default_value": 0,
+      "description": "현재 턴의 권한 분류기(classifier) 실행 시간 (ms). nn8()로 증가, in8()로 리셋. 도구 허용/거부 분류 비용 추적."
+    },
+    {
+      "field_name": "turnToolCount",
+      "type": "number",
+      "default_value": 0,
+      "description": "현재 턴에서 실행된 도구 호출 횟수. a58() 호출마다 +1. 턴당 도구 사용 빈도 측정."
+    },
+    {
+      "field_name": "turnHookCount",
+      "type": "number",
+      "default_value": 0,
+      "description": "현재 턴에서 실행된 훅 횟수. s58() 호출마다 +1. cn8()로 리셋."
+    },
+    {
+      "field_name": "turnClassifierCount",
+      "type": "number",
+      "default_value": 0,
+      "description": "현재 턴의 권한 분류기 호출 횟수. nn8()마다 +1. in8()로 리셋."
+    },
+    {
+      "field_name": "startTime",
+      "type": "number",
+      "default_value": "Date.now()",
+      "description": "세션 시작 Unix 타임스탬프 (ms). SX6() 턴 리셋 시 재갱신. 세션 활성 시간 계산에 사용."
+    },
+    {
+      "field_name": "lastInteractionTime",
+      "type": "number",
+      "default_value": "Date.now()",
+      "description": "마지막 사용자 상호작용 타임스탬프. Nj7()로 갱신. 유휴 감지 및 Dream 트리거 판단에 사용."
+    },
+    {
+      "field_name": "totalLinesAdded",
+      "type": "number",
+      "default_value": 0,
+      "description": "세션 전체 추가된 코드 라인 수. t58(added, removed)로 누적. OTel locCounter 메트릭 전송에 사용."
+    },
+    {
+      "field_name": "totalLinesRemoved",
+      "type": "number",
+      "default_value": 0,
+      "description": "세션 전체 삭제된 코드 라인 수. t58()로 누적."
+    },
+    {
+      "field_name": "hasUnknownModelCost",
+      "type": "boolean",
+      "default_value": false,
+      "description": "미등록 모델 사용으로 비용 계산 불가 시 true로 플래그. q38()로 설정. 비용 표시 시 '?' 표시 여부 결정."
+    },
+    {
+      "field_name": "cwd",
+      "type": "string",
+      "default_value": "\"\" (same as originalCwd at init)",
+      "description": "현재 작업 디렉토리. Bash 도구 실행, 파일 탐색의 기준. Vx()/o58()로 조회/변경."
+    },
+    {
+      "field_name": "modelUsage",
+      "type": "object (Record<string, usage>)",
+      "default_value": "{}",
+      "description": "모델별 토큰 사용량 누적 맵. Un8(cost, usage, modelId)으로 업데이트. 모델 이름을 키로, 사용량 객체를 값으로 저장."
+    },
+    {
+      "field_name": "mainLoopModelOverride",
+      "type": "string | undefined",
+      "default_value": "undefined",
+      "description": "메인 루프 모델 임시 오버라이드. YP(modelId)로 설정. /model 명령 또는 --model 플래그로 세션 중 모델 변경 시 사용."
+    },
+    {
+      "field_name": "initialMainLoopModel",
+      "type": "string | null",
+      "default_value": null,
+      "description": "세션 시작 시 설정된 최초 메인 루프 모델. $i8()로 한 번 설정. 모델 마이그레이션 로직의 기준점."
+    },
+    {
+      "field_name": "modelStrings",
+      "type": "object | null",
+      "default_value": null,
+      "description": "프로바이더별 모델 ID 문자열 캐시. gb6()로 설정, G_5()로 무효화. Bedrock/Vertex 모델 ID 재계산 방지용 캐시."
+    },
+    {
+      "field_name": "isInteractive",
+      "type": "boolean",
+      "default_value": false,
+      "description": "TTY 인터랙티브 세션 여부. Pi8()로 설정. false이면 headless/pipe 모드. i7()는 !isInteractive를 반환하여 비대화형 판단에 사용."
+    },
+    {
+      "field_name": "kairosActive",
+      "type": "boolean",
+      "default_value": false,
+      "description": "Kairos(스케줄링 시스템) 활성화 여부. v_5()로 설정. 크론 작업 및 예약 태스크 실행 제어."
+    },
+    {
+      "field_name": "strictToolResultPairing",
+      "type": "boolean",
+      "default_value": false,
+      "description": "도구 호출-결과 쌍 엄격 검증 모드. k_5()로 설정. 고아 tool_use/tool_result 메시지 감지 및 복구 로직 활성화."
+    },
+    {
+      "field_name": "sdkAgentProgressSummariesEnabled",
+      "type": "boolean",
+      "default_value": false,
+      "description": "Agent SDK에서 진행 요약 생성 활성화. Di8()로 설정. SDK 에이전트가 중간 상태를 요약해 상위 에이전트에 전달하는 기능."
+    },
+    {
+      "field_name": "userMsgOptIn",
+      "type": "boolean",
+      "default_value": false,
+      "description": "사용자 메시지 텔레메트리 수집 동의 여부. tp()로 설정. 동의 시 대화 내용 포함 이벤트 로깅 허용."
+    },
+    {
+      "field_name": "clientType",
+      "type": "string",
+      "default_value": "\"cli\"",
+      "description": "클라이언트 유형 식별자. Wi8()로 설정. 가능한 값: 'cli', 'claude-vscode', 'claude-jetbrains' 등. 일부 기능의 IDE 전용 분기에 사용."
+    },
+    {
+      "field_name": "sessionSource",
+      "type": "string | undefined",
+      "default_value": "undefined",
+      "description": "세션 진입 경로 식별자. Zi8()로 설정. 예: 'deep_link', 'teleport' 등. 분석/텔레메트리 세분화에 사용."
+    },
+    {
+      "field_name": "questionPreviewFormat",
+      "type": "string | undefined",
+      "default_value": "undefined",
+      "description": "AskUserQuestion 도구의 응답 미리보기 형식. O38()로 설정. 질문 표시 UI 렌더링 방식 제어."
+    },
+    {
+      "field_name": "sessionIngressToken",
+      "type": "string | undefined",
+      "default_value": "undefined",
+      "description": "세션 진입 토큰. a36()로 설정. CCR(Claude Code Remote) 원격 세션 인증에 사용."
+    },
+    {
+      "field_name": "oauthTokenFromFd",
+      "type": "string | undefined",
+      "default_value": "undefined",
+      "description": "파일 디스크립터로 전달된 OAuth 토큰. Vi8()로 설정. 보안 채널을 통한 토큰 전달 방식."
+    },
+    {
+      "field_name": "apiKeyFromFd",
+      "type": "string | undefined",
+      "default_value": "undefined",
+      "description": "파일 디스크립터로 전달된 API 키. yi8()로 설정. 환경변수 대신 FD를 통한 시크릿 전달."
+    },
+    {
+      "field_name": "flagSettingsPath",
+      "type": "string | undefined",
+      "default_value": "undefined",
+      "description": "플래그 설정 파일 경로. Gi8()로 설정. --flag-settings-file CLI 인수로 지정된 외부 설정 파일 경로."
+    },
+    {
+      "field_name": "flagSettingsInline",
+      "type": "object | null",
+      "default_value": null,
+      "description": "인라인으로 전달된 플래그 설정 객체. Ti8()로 설정. CLI 인수 --flag-settings-inline로 직접 JSON 설정 주입."
+    },
+    {
+      "field_name": "allowedSettingSources",
+      "type": "string[]",
+      "default_value": "[\"userSettings\",\"projectSettings\",\"localSettings\",\"flagSettings\",\"policySettings\"]",
+      "description": "설정값을 읽을 수 있는 소스 우선순위 목록. bi8()로 변경. 특정 소스 비활성화로 설정 격리 가능."
+    },
+    {
+      "field_name": "meter",
+      "type": "Meter | null",
+      "default_value": null,
+      "description": "OpenTelemetry 메트릭 미터 인스턴스. Oi8(meter, counterFactory)로 초기화. sessionCounter 등 OTel 카운터 생성에 사용."
+    },
+    {
+      "field_name": "sessionCounter",
+      "type": "Counter | null",
+      "default_value": null,
+      "description": "OTel 메트릭: 'claude_code.session.count' — CLI 세션 시작 횟수 카운터."
+    },
+    {
+      "field_name": "locCounter",
+      "type": "Counter | null",
+      "default_value": null,
+      "description": "OTel 메트릭: 'claude_code.lines_of_code.count' — added/removed 속성으로 구분된 코드 라인 수 카운터."
+    },
+    {
+      "field_name": "prCounter",
+      "type": "Counter | null",
+      "default_value": null,
+      "description": "OTel 메트릭: 'claude_code.pull_request.count' — 생성된 PR 수 카운터."
+    },
+    {
+      "field_name": "commitCounter",
+      "type": "Counter | null",
+      "default_value": null,
+      "description": "OTel 메트릭: 'claude_code.commit.count' — 생성된 git 커밋 수 카운터."
+    },
+    {
+      "field_name": "costCounter",
+      "type": "Counter | null",
+      "default_value": null,
+      "description": "OTel 메트릭: 'claude_code.cost.usage' (단위: USD) — 세션 비용 카운터."
+    },
+    {
+      "field_name": "tokenCounter",
+      "type": "Counter | null",
+      "default_value": null,
+      "description": "OTel 메트릭: 'claude_code.token.usage' (단위: tokens) — 사용 토큰 수 카운터."
+    },
+    {
+      "field_name": "codeEditToolDecisionCounter",
+      "type": "Counter | null",
+      "default_value": null,
+      "description": "OTel 메트릭: 'claude_code.code_edit_tool.decision' — Edit/Write/NotebookEdit 도구 허용/거부 결정 카운터."
+    },
+    {
+      "field_name": "activeTimeCounter",
+      "type": "Counter | null",
+      "default_value": null,
+      "description": "OTel 메트릭: 'claude_code.active_time.total' — 사용자 활성 시간 누적 카운터."
+    },
+    {
+      "field_name": "statsStore",
+      "type": "StatsStore | null",
+      "default_value": null,
+      "description": "사용 통계 저장소 참조. rn8()로 설정. /usage 명령 및 Insights 리포트 데이터 소스."
+    },
+    {
+      "field_name": "sessionId",
+      "type": "string",
+      "default_value": "Sn8() — UUID v4",
+      "description": "현재 세션 고유 식별자. un8()로 새 세션 시작 시 재생성. 모든 텔레메트리 이벤트의 세션 키."
+    },
+    {
+      "field_name": "parentSessionId",
+      "type": "string | undefined",
+      "default_value": "undefined",
+      "description": "부모 세션 ID. un8({setCurrentAsParent:true})로 설정. 포크/서브에이전트 생성 시 부모-자식 세션 연결에 사용."
+    },
+    {
+      "field_name": "loggerProvider",
+      "type": "LoggerProvider | null",
+      "default_value": null,
+      "description": "OpenTelemetry 로거 프로바이더. _38()로 설정. OTel 로그 파이프라인 진입점."
+    },
+    {
+      "field_name": "eventLogger",
+      "type": "Logger | null",
+      "default_value": null,
+      "description": "OTel 이벤트 로거 인스턴스. z38()로 설정. tengu_* 이벤트를 OTel로 전송하는 핵심 채널."
+    },
+    {
+      "field_name": "meterProvider",
+      "type": "MeterProvider | null",
+      "default_value": null,
+      "description": "OTel 메트릭 프로바이더. Y38()로 설정. meter 필드의 상위 프로바이더."
+    },
+    {
+      "field_name": "tracerProvider",
+      "type": "TracerProvider | null",
+      "default_value": null,
+      "description": "OTel 트레이서 프로바이더. $38()로 설정. 분산 추적(distributed tracing) 파이프라인."
+    },
+    {
+      "field_name": "agentColorMap",
+      "type": "Map<string, string>",
+      "default_value": "new Map()",
+      "description": "에이전트 ID → 터미널 색상 매핑. 서브에이전트가 다수일 때 출력을 색상으로 구분. agentColorIndex와 함께 순환 할당."
+    },
+    {
+      "field_name": "agentColorIndex",
+      "type": "number",
+      "default_value": 0,
+      "description": "다음 에이전트에 할당할 색상 순환 인덱스. agentColorMap에 새 에이전트 추가 시 증가."
+    },
+    {
+      "field_name": "lastAPIRequest",
+      "type": "object | null",
+      "default_value": null,
+      "description": "마지막 API 요청 파라미터 전체. Ei8()로 설정. 디버그, 재시도, 비스트리밍 폴백 시 참조."
+    },
+    {
+      "field_name": "lastAPIRequestMessages",
+      "type": "Message[] | null",
+      "default_value": null,
+      "description": "마지막 API 요청에 포함된 메시지 배열. Ri8()로 설정. 컴팩션 후 재구성 및 디버그에 사용."
+    },
+    {
+      "field_name": "lastClassifierRequests",
+      "type": "object[] | null",
+      "default_value": null,
+      "description": "마지막 권한 분류기 요청 목록. db6()로 설정. 도구 허용/거부 결정 디버그용."
+    },
+    {
+      "field_name": "cachedClaudeMdContent",
+      "type": "string | null",
+      "default_value": null,
+      "description": "CLAUDE.md 파일 내용 캐시. hi8()로 설정. 매 요청마다 파일 재읽기 방지. 파일 변경 감지 시 무효화."
+    },
+    {
+      "field_name": "inMemoryErrorLog",
+      "type": "any[]",
+      "default_value": "[]",
+      "description": "메모리 내 에러 로그 버퍼. 버그 리포트 제출, /doctor 명령 진단 시 참조."
+    },
+    {
+      "field_name": "inlinePlugins",
+      "type": "Plugin[]",
+      "default_value": "[]",
+      "description": "인라인 주입된 플러그인 목록. xi8()로 설정. SDK 호출 시 코드로 직접 주입된 플러그인 (파일 기반 플러그인과 구분)."
+    },
+    {
+      "field_name": "chromeFlagOverride",
+      "type": "boolean | undefined",
+      "default_value": "undefined",
+      "description": "Claude-in-Chrome 기능 강제 활성화/비활성화 오버라이드. Ii8()로 설정. --chrome CLI 플래그 처리에 사용."
+    },
+    {
+      "field_name": "useCoworkPlugins",
+      "type": "boolean",
+      "default_value": false,
+      "description": "Cowork(팀 협업) 플러그인 활성화 여부. ty(q)로 설정 시 DW()도 호출하여 플러그인 목록 갱신. 팀 기능 게이팅."
+    },
+    {
+      "field_name": "sessionBypassPermissionsMode",
+      "type": "boolean",
+      "default_value": false,
+      "description": "세션 전체 권한 검사 우회 모드. ui8()로 설정. --dangerously-skip-permissions 플래그에 대응. 모든 도구 자동 승인."
+    },
+    {
+      "field_name": "scheduledTasksEnabled",
+      "type": "boolean",
+      "default_value": false,
+      "description": "스케줄 태스크(Kairos 크론) 실행 허용 여부. ib6()로 설정. 크론 작업이 실제로 발화되려면 kairosActive도 true여야 함."
+    },
+    {
+      "field_name": "sessionCronTasks",
+      "type": "CronTask[]",
+      "default_value": "[]",
+      "description": "현재 세션에 등록된 크론 태스크 목록. 새 태스크 추가 시 기존 길이와의 차이를 반환. Kairos 스케줄러가 이 목록을 순회."
+    },
+    {
+      "field_name": "sessionCreatedTeams",
+      "type": "Set<string>",
+      "default_value": "new Set()",
+      "description": "세션 중 생성된 팀 ID 집합. 팀 생성 텔레메트리 중복 방지 및 세션 내 팀 추적."
+    },
+    {
+      "field_name": "sessionTrustAccepted",
+      "type": "boolean",
+      "default_value": false,
+      "description": "세션에서 신뢰 다이얼로그 수락 여부. ab6()로 설정. 디렉토리 신뢰 확인 후 한 번만 표시하는 제어 플래그."
+    },
+    {
+      "field_name": "sessionPersistenceDisabled",
+      "type": "boolean",
+      "default_value": false,
+      "description": "세션 기록 파일 저장 비활성화. pi8()로 설정. --no-persistence 플래그에 대응. true 시 transcript 미저장."
+    },
+    {
+      "field_name": "hasExitedPlanMode",
+      "type": "boolean",
+      "default_value": false,
+      "description": "이번 세션에서 Plan 모드를 한 번 이상 종료했는지 여부. qE()로 설정. Plan→Auto 전환 첨부 파일 생성 조건 판단."
+    },
+    {
+      "field_name": "needsPlanModeExitAttachment",
+      "type": "boolean",
+      "default_value": false,
+      "description": "Plan 모드 종료 첨부 메시지 전송 필요 플래그. Ex()로 설정. Plan→일반 전환 시 사용자에게 요약 첨부."
+    },
+    {
+      "field_name": "needsAutoModeExitAttachment",
+      "type": "boolean",
+      "default_value": false,
+      "description": "Auto 모드 종료 첨부 메시지 전송 필요 플래그. VZ()로 설정. Auto→Plan 또는 기타 전환 시 요약 첨부."
+    },
+    {
+      "field_name": "lspRecommendationShownThisSession",
+      "type": "boolean",
+      "default_value": false,
+      "description": "LSP(Language Server Protocol) 추천 팁을 이번 세션에 표시했는지 여부. Qi8()로 설정. 세션당 1회 표시 제어."
+    },
+    {
+      "field_name": "initJsonSchema",
+      "type": "object | null",
+      "default_value": null,
+      "description": "/init 명령 실행 시 생성된 JSON 스키마. di8()로 설정. 구조화 출력 초기화 결과 캐시."
+    },
+    {
+      "field_name": "registeredHooks",
+      "type": "Record<string, HookHandler[]> | null",
+      "default_value": null,
+      "description": "등록된 라이프사이클 훅 핸들러 맵. It(hooksObj)로 추가. PreToolUse, PostToolUse, Stop 등 이벤트별 핸들러 저장."
+    },
+    {
+      "field_name": "planSlugCache",
+      "type": "Map<string, string>",
+      "default_value": "new Map()",
+      "description": "세션 ID → Plan 슬러그 캐시. 세션 전환 시 이전 세션 항목 삭제. Plan 모드 URL/식별자 빠른 조회용."
+    },
+    {
+      "field_name": "teleportedSessionInfo",
+      "type": "object | null",
+      "default_value": null,
+      "description": "텔레포트(원격 세션 이어받기) 정보. eb6()로 설정. {isTeleported:true, hasLoggedFirstMessage:false, sessionId} 구조. 원격 세션 인계 추적."
+    },
+    {
+      "field_name": "invokedSkills",
+      "type": "Map<string, {skillName, skillPath, content, invokedAt, agentId}>",
+      "default_value": "new Map()",
+      "description": "세션에서 호출된 스킬 기억 맵. 키: '{agentId}:{skillName}'. 에이전트 ID별로 필터 가능(X38). ci8()로 에이전트 종료 시 정리. 스킬 재실행 방지 및 컨텍스트 유지에 사용."
+    },
+    {
+      "field_name": "slowOperations",
+      "type": "SlowOperation[]",
+      "default_value": "[]",
+      "description": "느린 작업 기록 배열. 타임스탬프 기반 TTL 필터링. 성능 진단 및 사용자 경고 표시에 사용."
+    },
+    {
+      "field_name": "sdkBetas",
+      "type": "string[] | undefined",
+      "default_value": "undefined",
+      "description": "Agent SDK에서 전달된 추가 beta 헤더 목록. Ai8()로 설정. QM()으로 조회. SDK 호출 시 anthropic-beta 헤더에 병합."
+    },
+    {
+      "field_name": "mainThreadAgentType",
+      "type": "string | undefined",
+      "default_value": "undefined",
+      "description": "메인 스레드 에이전트 유형 식별자. vc()로 설정. 텔레메트리 세분화 및 에이전트별 동작 분기에 사용."
+    },
+    {
+      "field_name": "isRemoteMode",
+      "type": "boolean",
+      "default_value": false,
+      "description": "원격 모드(CCR) 활성화 여부. li8()로 설정. true 시 로컬 파일시스템 접근 대신 원격 환경 사용."
+    },
+    {
+      "field_name": "directConnectServerUrl",
+      "type": "string | undefined",
+      "default_value": "undefined",
+      "description": "직접 연결 서버 URL. A_5()로 설정. CCR 브리지 없이 직접 백엔드 서버에 연결할 때 사용."
+    },
+    {
+      "field_name": "systemPromptSectionCache",
+      "type": "Map<string, string>",
+      "default_value": "new Map()",
+      "description": "시스템 프롬프트 섹션별 캐시 맵. 섹션 이름 → 내용. 매 요청마다 전체 시스템 프롬프트 재조립 방지용 캐시."
+    },
+    {
+      "field_name": "lastEmittedDate",
+      "type": "Date | null",
+      "default_value": null,
+      "description": "마지막 날짜 구분선 출력 날짜. BX6()로 갱신. 대화 UI에서 날짜 변경 시에만 날짜 헤더 표시하는 중복 방지 플래그."
+    },
+    {
+      "field_name": "additionalDirectoriesForClaudeMd",
+      "type": "string[]",
+      "default_value": "[]",
+      "description": "CLAUDE.md를 탐색할 추가 디렉토리 목록. qx6()로 설정. 기본 프로젝트 루트 외 추가 경로의 CLAUDE.md 로드."
+    },
+    {
+      "field_name": "allowedChannels",
+      "type": "string[]",
+      "default_value": "[]",
+      "description": "허용된 플러그인/MCP 채널 목록. kc()로 설정. 채널 기반 플러그인 활성화 제어."
+    },
+    {
+      "field_name": "hasDevChannels",
+      "type": "boolean",
+      "default_value": false,
+      "description": "개발자 채널 허용 여부. W38()로 설정. 실험적 플러그인/채널 활성화 게이트."
+    },
+    {
+      "field_name": "sessionProjectDir",
+      "type": "string | null",
+      "default_value": null,
+      "description": "세션별 프로젝트 디렉토리 경로. 세션 전환(un8) 시 null로 리셋. 세션 격리된 프로젝트 경로 추적."
+    },
+    {
+      "field_name": "promptCache1hAllowlist",
+      "type": "string[] | null",
+      "default_value": null,
+      "description": "1시간 프롬프트 캐시 허용 목록. ai8()/si8()으로 조회/설정. 허용된 모델/프로바이더에서만 1h 캐시 활성화."
+    },
+    {
+      "field_name": "promptCache1hEligible",
+      "type": "boolean | null",
+      "default_value": null,
+      "description": "현재 설정에서 1시간 프롬프트 캐시 가능 여부. ti8()/ei8()으로 조회/설정. null=미판단, true=가능, false=불가."
+    },
+    {
+      "field_name": "afkModeHeaderLatched",
+      "type": "string | null",
+      "default_value": null,
+      "description": "AFK 모드 beta 헤더 래치 값. Kr8()로 설정, Or8()로 리셋. 한번 활성화된 AFK 모드를 해당 요청 완료까지 유지하는 스티키 플래그."
+    },
+    {
+      "field_name": "fastModeHeaderLatched",
+      "type": "string | null",
+      "default_value": null,
+      "description": "Fast Mode beta 헤더 래치 값. zr8()로 설정. Opus 4.6 Fast Mode 요청 중 헤더가 바뀌지 않도록 고정."
+    },
+    {
+      "field_name": "cacheEditingHeaderLatched",
+      "type": "string | null",
+      "default_value": null,
+      "description": "캐시 편집 beta 헤더 래치 값. R_5()로 설정. 편집 중인 프롬프트 캐시 세그먼트가 요청 간 일관성 유지."
+    },
+    {
+      "field_name": "thinkingClearLatched",
+      "type": "boolean | null",
+      "default_value": null,
+      "description": "Extended Thinking 비활성화 래치. Ar8()로 설정. null=기본, true=thinking을 이 요청에서 강제 비활성화. 특정 턴에서 thinking 없는 응답이 필요할 때 사용."
+    },
+    {
+      "field_name": "promptId",
+      "type": "string | null",
+      "default_value": null,
+      "description": "현재 요청의 프롬프트 ID. 턴 리셋(SX6) 시 null로 초기화. API 응답과 요청 매핑 및 중복 요청 감지에 사용."
+    },
+    {
+      "field_name": "lastMainRequestId",
+      "type": "string | undefined",
+      "default_value": "undefined",
+      "description": "마지막 메인 루프 API 요청 ID. Ki8()로 설정. 스트리밍 재연결, 재시도 요청 식별에 사용."
+    },
+    {
+      "field_name": "lastApiCompletionTimestamp",
+      "type": "number | null",
+      "default_value": null,
+      "description": "마지막 API 응답 완료 Unix 타임스탬프 (ms). mb6()로 설정. 스트리밍 스톨(stall) 감지 및 타임아웃 계산 기준."
+    },
+    {
+      "field_name": "pendingPostCompaction",
+      "type": "boolean",
+      "default_value": false,
+      "description": "압축(compaction) 완료 후 후처리 대기 플래그. bt()로 true 설정. _i8()로 값을 읽고 false로 리셋(consume 패턴). 압축 후 정확히 한 번만 후속 처리를 실행하는 엣지 트리거."
+    }
+  ]
+}
